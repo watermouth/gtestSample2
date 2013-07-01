@@ -1,0 +1,23 @@
+GTEST_DIR = /Users/Dirac/Development/Cpp/gtest-1.6.0 
+
+GTEST_ROOT = $(dir $(GTEST_DIR))
+GTEST_INCLUDE_DIR = $(dir $(GTEST_DIR)/include)
+GTEST_SRC_DIR = $(dir $(GTEST_DIR)/src)
+
+INCLUDES += $(GTEST_ROOT) $(GTEST_INCLUDE_DIR)
+
+TARGET_SRC = $(file $(GTEST_SRC_DIR)/gtest-all)
+GTEST_LIB = libgtest
+
+$(TARGET_SRC)$(EXT_OBJ): $(TARGET_SRC).cc
+  section# this section keyword and the following lines indents are necessary to use IFILES variable. 
+    IFILES = $(addprefix -I, $(INCLUDES))
+    echo $(IFILES)
+    g++ $(IFILES) $(CXXFLAGS) -o $@ -c $< # $@ means the target file name, $< means the first of the dependent files. 
+
+.DEFAULT: $(StaticCXXLibrary $(GTEST_LIB), $(TARGET_SRC))
+  echo $(GTEST_DIR)
+  echo $(GTEST_ROOT)
+  echo $(GTEST_INCLUDE_DIR)
+  echo $(GTEST_SRC_DIR)
+
