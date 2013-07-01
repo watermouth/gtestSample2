@@ -3,3 +3,6 @@ include/gtest/*
 *.a
 *lock
 *omakedb*
+*.o
+unittest
+*omakedb.lock

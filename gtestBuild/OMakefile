@@ -1,4 +1,3 @@
-.PHONY: clean 
 GTEST_DIR = /Users/Dirac/Development/Cpp/gtest-1.6.0 
 
 GTEST_ROOT = $(dir $(GTEST_DIR))
@@ -20,8 +19,9 @@ $(SRC_FILE)$(EXT_OBJ): $(TARGET_SRC)
 $(GTEST_LIB)$(EXT_LIB): $(SRC_FILE)$(EXT_OBJ) 
   ar -rv $@ $< 
 
-.DEFAULT: $(GTEST_LIB)$(EXT_LIB) 
+gtestlib: $(GTEST_LIB)$(EXT_LIB) 
   rm $(SRC_FILE)$(EXT_OBJ)
+  #mv $(GTEST_LIB)$(EXT_LIB) ../test/
 #  echo $(GTEST_DIR)
 #  echo $(GTEST_ROOT)
 #  echo $(GTEST_INCLUDE_DIR)
