@@ -17,11 +17,16 @@
 #####
 # original version is https://raw.github.com/murank/misc/master/calc/OMakefile 
 
+# unzipped original gtest directory
+GTEST_DIR = /Users/Dirac/Development/Cpp/gtest-1.6.0 
+# working directory for building gtestlib.a
+GTEST_BUILD_DIR = gtestBuild
+# variable which refers to gtestlib.a
+LIB_GTEST = $(file $(GTEST_BUILD_DIR)/libgtest)
+
 INCLUDE_DIR = include
 SRC_DIR = src
 TEST_DIR = test
-GTEST_BUILD_DIR = gtestBuild
-LIB_GTEST = $(file $(GTEST_BUILD_DIR)/libgtest)
 
 PROGRAM = main 
 TEST_PROGRAM = $(TEST_DIR)/unittest
@@ -59,13 +64,17 @@ section
 # Subdirectories
 #
 
-foreach(d, $(subdirs $(SRC_DIR) $(TEST_DIR) $(GTEST_BUILD_DIR)))
-  .SUBDIRS: $(d)
-    if $(file-exists OMakefile)
-      include OMakefile
-    else
-      clean:
-        rm -f *.o
+.SUBDIRS: $(SRC_DIR) $(TEST_DIR) $(GTEST_BUILD_DIR) 
+  if $(file-exists OMakefile)
+    include OMakefile
+
+#foreach(d, $(subdirs $(SRC_DIR) $(TEST_DIR) $(GTEST_BUILD_DIR)))
+#  .SUBDIRS: $(d)
+#    if $(file-exists OMakefile)
+#      include OMakefile
+#    else
+#      clean:
+#        rm -f *.o
 
 
 ########################################################################
@@ -73,9 +82,10 @@ foreach(d, $(subdirs $(SRC_DIR) $(TEST_DIR) $(GTEST_BUILD_DIR)))
 #
 
 test: $(TEST_PROGRAM)
+  ./$(TEST_PROGRAM)
 
 clean:
-  rm -f $(PROGRAM) $(TEST_PROGRAM)
+  rm -rf $(filter-proper-targets $(ls R, .))
 
 all: $(PROGRAM)$(EXE)
 

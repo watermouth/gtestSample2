@@ -1,5 +1,3 @@
-GTEST_DIR = /Users/Dirac/Development/Cpp/gtest-1.6.0 
-
 GTEST_ROOT = $(dir $(GTEST_DIR))
 GTEST_INCLUDE_DIR = $(dir $(GTEST_DIR)/include)
 GTEST_SRC_DIR = $(dir $(GTEST_DIR)/src)
