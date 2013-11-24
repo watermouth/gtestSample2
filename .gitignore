@@ -6,3 +6,4 @@ include/gtest/*
 *.o
 unittest
 *omakedb.lock
+*swp
