@@ -82,12 +82,12 @@ section
 #
 
 test: $(TEST_PROGRAM)
-  ./$(TEST_PROGRAM)
+#  ./$(TEST_PROGRAM)
 
 clean:
   rm -rf $(filter-proper-targets $(ls R, .))
 
 all: $(PROGRAM)$(EXE)
 
-.DEFAULT: all
+.DEFAULT: test 
 
