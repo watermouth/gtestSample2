@@ -3,35 +3,105 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
+#include <boost/signals2.hpp>
 #include "utility.h"
 
 using namespace std;
 
-class BankAccount {
+class BankAccountInternalLock {
 public:
-  BankAccount() : account(0) { }
-  void Deposit(int x) { account += x; }
-  int WithDraw(int x) { account -= x; return account;}
+  BankAccountInternalLock() : balance(0) { }
+  void Deposit(int x) {
+    boost::lock_guard<boost::mutex> guard(mtx_);
+    //mtx_.lock();
+    // mutexの効果を見るために, このスレッドをsleepさせる.
+    int temp = balance;
+    temp += x;
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1)); 
+    balance = temp;
+    //mtx_.unlock();
+  }
+  void WithDraw(int x) {
+    boost::lock_guard<boost::mutex> guard(mtx_);
+    //mtx_.lock();
+    // mutexの効果を見るために, このスレッドをsleepさせる.
+    int temp = balance;
+    temp -= x;
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1)); 
+    balance = temp;
+    //mtx_.unlock();
+  }
+  int GetBalance() {
+    boost::lock_guard<boost::mutex> guard(mtx_);
+    //mtx_.lock();
+    int temp = balance;
+    //mtx_.unlock();
+    return temp;
+  }
 private:
-  int account;
+  int balance;
+  boost::mutex mtx_;
 };
 
-void bankAgent(BankAccount &a) {
-  vector<int> account;
-  account.reserve(10);
-  for (int i=0; i!=10; ++i) {
+class BankAccountLockable {
+  boost::mutex mtx_; 
+  int balance;
+public:
+  BankAccountLockable() : balance(0) { }
+  void Deposit(int x) {
+    int temp = balance;
+    temp += x;
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1)); 
+    balance = temp;
+  }
+  void WithDraw(int x) {
+    int temp = balance;
+    temp -= x;
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1)); 
+    balance = temp;
+  }
+  int GetBalance() {
+    int temp = balance;
+    return temp;
+  }
+  void Lock() { mtx_.lock(); }
+  void Unlock() { mtx_.unlock(); }
+};
+
+template <class T>
+void bankAgent(T &a) {
+  for (int i=0; i!=50; ++i) {
     a.Deposit(500);
   }
 }
 
-void withDraw(BankAccount &a) {
-  vector<int> account;
-  account.reserve(10);
-  for (int i=0; i!=10; ++i) {
-    cout << a.WithDraw(100) << " ";
+void bankAgentWithLock(BankAccountLockable &a) {
+  for (int i=0; i!=50; ++i) {
+    a.Lock();
+    a.Deposit(500);
+    a.Unlock();
+  }
+}
+
+template <class T>
+void withDraw(T &a) {
+  for (int i=0; i!=50; ++i) {
+    a.WithDraw(100);
+    cout << a.GetBalance() << " ";
   }
   cout << endl; 
   //PRINT_ELEMENTS(account, "account: "); 
+}
+
+void withDrawWithLock(BankAccountLockable &a) {
+  for (int i=0; i!=50; ++i) {
+    a.Lock();
+    a.WithDraw(100);
+    cout << a.GetBalance() << " ";
+    a.Unlock();
+  }
+  cout << endl; 
 }
 
 class SynchronizationTest : public testing::Test {
@@ -40,13 +110,64 @@ protected:
 };
 
 TEST_F(SynchronizationTest, NoLocking) {
-  BankAccount joes;
-  boost::thread th1( 
-    boost::bind(bankAgent, joes)
-  );
-  boost::thread th2( 
-    boost::bind(withDraw, joes)
-  );
+  BankAccountLockable joes;
+  boost::function<void(void)> func1 = 
+    boost::bind(bankAgent<BankAccountLockable>, boost::ref(joes));
+  boost::function<void(void)> func2 = 
+    boost::bind(withDraw<BankAccountLockable>, boost::ref(joes));
+  boost::thread th1(func1);
+  boost::thread th2(func2);
   th1.join();
   th2.join();
+  cout << "Balance: " << joes.GetBalance() << endl;
+  EXPECT_NE(20000, joes.GetBalance());
+} 
+
+TEST_F(SynchronizationTest, InternalLocking) {
+  BankAccountInternalLock joes;
+  boost::function<void(void)> func1 = 
+    boost::bind(bankAgent<BankAccountInternalLock>, boost::ref(joes));
+  boost::function<void(void)> func2 = 
+    boost::bind(withDraw<BankAccountInternalLock>, boost::ref(joes));
+  boost::thread th1(func1);
+  boost::thread th2(func2);
+  th1.join();
+  th2.join();
+  cout << "Balance: " << joes.GetBalance() << endl;
+  EXPECT_EQ(20000, joes.GetBalance());
+}
+
+TEST_F(SynchronizationTest, ExternalLocking) {
+  BankAccountLockable joes;
+/* ダメ
+  boost::function<void(void)> func_bank_agent = 
+    boost::bind(bankAgent<BankAccountLockable>, boost::ref(joes));
+  boost::function<void(void)> func_withdraw  = 
+    boost::bind(withDraw<BankAccountLockable>, boost::ref(joes));
+  boost::function<void(void)> func_lock = 
+    boost::bind(&BankAccountLockable::Lock, boost::ref(joes));
+  boost::function<void(void)> func_unlock = 
+    boost::bind(&BankAccountLockable::Unlock, boost::ref(joes));
+  // Lock(), Unlock()をまとめた関数を作成する
+  boost::signals2::signal<void(void)> sig1, sig2;
+  // 簡単のため一スレッド単位でまとめてしまう（InternalLockingの例と比べるとlock単位が大きい） 
+  sig1.connect(func_lock);
+  sig1.connect(func_bank_agent);
+  sig1.connect(func_unlock);
+  sig2.connect(func_lock);
+  sig2.connect(func_withdraw);
+  sig2.connect(func_unlock);
+  boost::thread th1(sig1);
+  boost::thread th2(sig2);
+*/
+  boost::function<void(void)> func1 = 
+    boost::bind(bankAgentWithLock, boost::ref(joes));
+  boost::function<void(void)> func2 = 
+    boost::bind(withDrawWithLock, boost::ref(joes));
+  boost::thread th1(func1);
+  boost::thread th2(func2);
+  th1.join();
+  th2.join();
+  cout << "Balance: " << joes.GetBalance() << endl;
+  EXPECT_EQ(20000, joes.GetBalance());
 } 
