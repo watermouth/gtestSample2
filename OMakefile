@@ -33,7 +33,7 @@ TEST_PROGRAM = $(TEST_DIR)/unittest
 
 CXXFLAGS += -O2 -Wall
 ASFLAGS +=
-LDFLAGS +=
+LDFLAGS +=  -lboost_system-mt -lboost_thread-mt
 INCLUDES += $(dir $(INCLUDE_DIR) $(SRC_DIR))
 
 .PHONY: all clean test gtestlib
