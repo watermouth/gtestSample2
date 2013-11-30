@@ -13,8 +13,8 @@
 
 using namespace std;
 
-  template <class T>
-  T ReturnSelf(T x) { return x;}
+template <class T>
+T ReturnSelf(const T &x) { return x;}
 
 class FunctorsTest : public testing::Test {
 protected:
@@ -159,8 +159,10 @@ TEST_F(FunctorsTest, count_if) {
 TEST_F(FunctorsTest, transform){
   // transformの練習: 関数オブジェクトをどのように用意するか
   vector<double> x;
-  using namespace boost::assign;
-  x += 1, 2, 3, 4, 5, 6, 3, 12, 13, 8, 2;
+  {
+    using namespace boost::assign;
+    x += 1, 2, 3, 4, 5, 6, 3, 12, 13, 8, 2;
+  }
   vector<double> y; 
 
   PRINT_ELEMENTS(x, "elements: ");
@@ -197,4 +199,30 @@ TEST_F(FunctorsTest, transform){
   PRINT_ELEMENTS(y, "returned: ");
 }
 
+/// Boost::functionからfunctionを作れるか？
+TEST_F(FunctorsTest, boostFunction) {
+  // 関数オブジェクトの代入
+  boost::function<int(void)> f
+    = FunctorsTest::ReturnOne();
+  // 動作確認
+  PrintValue<int>()((f()));
+  
+  // boost::functionの代入boost::functionの作成
+  boost::function<int(void)> g
+    = f;
+  // 動作確認
+  PrintValue<int>()((g()));
+
+  // boost::functionを用いた関数合成
+  // というよりも, bindを関数オブジェクトに適用する方法 
+  // 戻り値を指定する必要がある.
+  // もしも関数オブジェクトがresult_typeというtypedefをしていれば、
+  // 戻り値を省略することができる.
+  // std::less<int>などのbinary_functionはそうなっている.
+  boost::function<void(void) > h
+    = boost::bind<void>(PrintValue<int>(), 1); 
+  // 動作確認
+  h();
+
+} 
   // 特定の条件を満たす要素に対する何らかの処理の戻り値を得る
