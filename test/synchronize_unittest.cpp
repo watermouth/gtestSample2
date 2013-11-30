@@ -109,6 +109,7 @@ protected:
 
 };
 
+/// Without locking, you'll get wrong number.
 TEST_F(SynchronizationTest, NoLocking) {
   BankAccountLockable joes;
   boost::function<void(void)> func1 = 
@@ -123,6 +124,7 @@ TEST_F(SynchronizationTest, NoLocking) {
   EXPECT_NE(20000, joes.GetBalance());
 } 
 
+/// With internal locking, you'll get correct number.
 TEST_F(SynchronizationTest, InternalLocking) {
   BankAccountInternalLock joes;
   boost::function<void(void)> func1 = 
@@ -137,6 +139,7 @@ TEST_F(SynchronizationTest, InternalLocking) {
   EXPECT_EQ(20000, joes.GetBalance());
 }
 
+/// With external locking, you'll get correct number.
 TEST_F(SynchronizationTest, ExternalLocking) {
   BankAccountLockable joes;
   boost::function<void(void)> func1 = 
