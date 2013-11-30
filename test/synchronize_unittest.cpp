@@ -139,27 +139,6 @@ TEST_F(SynchronizationTest, InternalLocking) {
 
 TEST_F(SynchronizationTest, ExternalLocking) {
   BankAccountLockable joes;
-/* ダメ
-  boost::function<void(void)> func_bank_agent = 
-    boost::bind(bankAgent<BankAccountLockable>, boost::ref(joes));
-  boost::function<void(void)> func_withdraw  = 
-    boost::bind(withDraw<BankAccountLockable>, boost::ref(joes));
-  boost::function<void(void)> func_lock = 
-    boost::bind(&BankAccountLockable::Lock, boost::ref(joes));
-  boost::function<void(void)> func_unlock = 
-    boost::bind(&BankAccountLockable::Unlock, boost::ref(joes));
-  // Lock(), Unlock()をまとめた関数を作成する
-  boost::signals2::signal<void(void)> sig1, sig2;
-  // 簡単のため一スレッド単位でまとめてしまう（InternalLockingの例と比べるとlock単位が大きい） 
-  sig1.connect(func_lock);
-  sig1.connect(func_bank_agent);
-  sig1.connect(func_unlock);
-  sig2.connect(func_lock);
-  sig2.connect(func_withdraw);
-  sig2.connect(func_unlock);
-  boost::thread th1(sig1);
-  boost::thread th2(sig2);
-*/
   boost::function<void(void)> func1 = 
     boost::bind(bankAgentWithLock, boost::ref(joes));
   boost::function<void(void)> func2 = 
