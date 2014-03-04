@@ -18,7 +18,7 @@
 # original version is https://raw.github.com/murank/misc/master/calc/OMakefile 
 
 # unzipped original gtest directory
-GTEST_DIR = /Users/Dirac/Development/Cpp/gtest-1.6.0 
+GTEST_DIR = /usr/local/lib/gtest-1.7.0/
 # working directory for building gtestlib.a
 GTEST_BUILD_DIR = gtestBuild
 # variable which refers to gtestlib.a
@@ -54,7 +54,6 @@ CXXProgram($(PROGRAM), $(CXXFILES))
 TEST_CXXFILES[] = $(filter-out %main, $(CXXFILES)) $(removesuffix $(filter %.cpp, $(ls R, $(TEST_DIR))))
 
 section
-  CXXFLAGS += -pthread
   LIBS += $(LIB_GTEST)
   echo $(TEST_CXXFILES)
   CXXProgram($(TEST_PROGRAM), $(TEST_CXXFILES))
