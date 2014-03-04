@@ -73,6 +73,7 @@ protected:
     int value_;
   };
 
+public:
   template <class T>
   T MemReturnSelf(T x) { return x;}
    
