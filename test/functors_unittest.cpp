@@ -125,7 +125,10 @@ TEST_F(FunctorsTest, SetPredicate){
   EXPECT_EQ(true, Compare(1, 3, std::less<int>()));
 
   HogeWithCompare hogeObj;
-  EXPECT_EQ(true, hogeObj.comp(12, 10, std::greater<double>()));
+  EXPECT_EQ(true, hogeObj.comp<int>(12, 10, std::greater<int>()));
+  EXPECT_EQ(false, hogeObj.comp<int>(1.2, 1.0, std::greater<int>()));
+  EXPECT_EQ(true, hogeObj.comp<double>(1.2, 1.0, std::greater<double>()));
+  EXPECT_EQ(true, hogeObj.comp<std::string>("fa8", "aa", std::greater<std::string>()));
 
   TemplateHogeWithCompare<FugaWithGetValue> templateHogeObj;
   FugaWithGetValue fugaObj1(1);
