@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
 
 #include <vector>
-#include <functional>
 #include <algorithm>
+#include <numeric>
+#include <functional>
 #include <iterator>
 #include <iostream>
 #include <boost/assign.hpp>
@@ -15,6 +16,13 @@ using namespace std;
 
 template <class T>
 T ReturnSelf(const T &x) { return x;}
+
+struct AddOne {
+  AddOne(int i) : v_(i) {}
+  int operator()() { return v_++; }
+private:
+  int v_;
+};
 
 class FunctorsTest : public testing::Test {
 protected:
@@ -73,6 +81,7 @@ protected:
     int value_;
   };
 
+public:
   template <class T>
   T MemReturnSelf(T x) { return x;}
    
@@ -224,5 +233,24 @@ TEST_F(FunctorsTest, boostFunction) {
   // 動作確認
   h();
 
+}
+
+/// bindの使用法
+/// accumulateをbindする. 型指定が必要.
+TEST_F(FunctorsTest, bindAccumulate){
+  size_t size = 10;
+  vector<int> coll(size,0);
+  generate_n(coll.begin(), size, AddOne(1));
+  EXPECT_EQ(size, coll.size());
+  /// そのままaccumulate
+  int correnct_answer = accumulate(coll.begin(),coll.end(),0); 
+  cout << "answer: " << correnct_answer << endl;  
+  /// bindするためのtypedef
+  typedef int (*AcumInt)(vector<int>::iterator, vector<int>::iterator, int) ;
+  boost::function<int(void)> func 
+    = boost::bind(static_cast<AcumInt>(accumulate), coll.begin(), coll.end(), 0); 
+  cout << "used AcumInt: " << func() << endl;
+  EXPECT_EQ(correnct_answer, func());
 } 
+
   // 特定の条件を満たす要素に対する何らかの処理の戻り値を得る
